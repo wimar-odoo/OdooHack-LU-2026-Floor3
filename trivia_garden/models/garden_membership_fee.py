@@ -14,6 +14,7 @@
 # ----------------------------------------------------------------------------
 
 from odoo import api, fields, models
+from odoo.exceptions import ValidationError
 
 
 class GardenMembershipFee(models.Model):
@@ -31,11 +32,15 @@ class GardenMembershipFee(models.Model):
     )
     payment_date = fields.Date(string="Payment Date")
 
-    # A member pays at most one fee per year
-    _sql_constraints = [
-        ("partner_year_unique", "unique(partner_id, year)",
-         "A member can only pay one fee per year."),
-    ]
+    @api.constrains("partner_id", "year")
+    def _check_one_fee_per_year(self):
+       for fee in self:
+           if self.search_count([
+               ("partner_id", "=", fee.partner_id.id),
+               ("year", "=", fee.year),
+               ("id", "!=", fee.id),
+           ]):
+               raise ValidationError("A member can only pay one fee per year.")
 
     def action_mark_paid(self):
         self.write({
