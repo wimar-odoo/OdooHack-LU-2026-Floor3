@@ -12,14 +12,63 @@
                 <div class="container py-5">
                     <h1>Adopt a friend</h1>
                     <p class="lead">These animals of the Refuge Les 4 Pattes are waiting for a family.</p>
-                    <!--
-                    TODO 2: a responsive grid of the animals, with Bootstrap: one card per row on a phone, two on
-                    a tablet, three on a computer. Each animal is displayed by calling the template
-                    trivia_animal_shelter.animal_card.
+                    <!-- Filter buttons (Species + Sex) & Sort dropdown -->
+                    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+                        <div class="d-flex flex-wrap align-items-center gap-3">
+                            <div class="btn-group" role="group" aria-label="Species Filter">
+                                <a t-attf-href="/adopt#{('?sex=' + sex) if sex else ''}"
+                                   t-attf-class="btn #{'btn-primary' if not species else 'btn-outline-primary'}">
+                                    All Species
+                                </a>
+                                <t t-foreach="request.env['shelter.animal']._get_species()" t-as="spec">
+                                    <a name="species"
+                                       t-attf-href="/adopt?species=#{spec[0]}#{('&amp;sex=' + sex) if sex else ''}#{('&amp;sort_by=' + sort_by) if sort_by else ''}"
+                                       t-attf-class="btn #{'btn-primary' if species == spec[0] else 'btn-outline-primary'}"
+                                       t-out="spec[1]"/>
+                                </t>
+                            </div>
 
-                    ⭐ BONUS: above the grid, one button per species to filter the animals (/adopt?species=cat),
-                    the buttons of the species are given by request.env['shelter.animal']._get_species().
-                    -->
+                            <!-- Sex Filter -->
+                            <div class="btn-group" role="group" aria-label="Sex Filter">
+                                <a t-attf-href="/adopt?#{('&amp;species=' + species) if species else ''}#{('&amp;sort_by=' + sort_by) if sort_by else ''}"
+                                   t-attf-class="btn #{'btn-secondary' if not sex else 'btn-outline-secondary'}">
+                                    All Sexes
+                                </a>
+                                <t t-foreach="request.env['shelter.animal']._get_sexes()" t-as="s">
+                                    <a t-attf-href="/adopt?sex=#{s[0]}#{('&amp;species=' + species) if species else ''}#{('&amp;sort_by=' + sort_by) if sort_by else ''}"
+                                       t-attf-class="btn #{'btn-secondary' if sex == s[0] else 'btn-outline-secondary'}"
+                                       t-out="s[1]"/>
+                                </t>
+                            </div>
+                        </div>
+
+                        <!-- Sort dropdown -->
+                        <div class="dropdown">
+                            <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="fa fa-sort me-1"/> Sort by
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                <li>
+                                    <a class="dropdown-item" t-attf-href="/adopt?sort_by=name#{('&amp;species=' + species) if species else ''}#{('&amp;sex=' + sex) if sex else ''}">Name (A-Z)</a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" t-attf-href="/adopt?sort_by=youngest#{('&amp;species=' + species) if species else ''}#{('&amp;sex=' + sex) if sex else ''}">Youngest first</a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" t-attf-href="/adopt?sort_by=oldest#{('&amp;species=' + species) if species else ''}#{('&amp;sex=' + sex) if sex else ''}">Oldest first</a>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- Responsive grid: 1 card per row on mobile (col-12), 2 on tablet (col-md-6), 3 on desktop (col-lg-4) -->
+                    <div class="row g-4">
+                        <t t-foreach="animals" t-as="animal">
+                            <div class="col-12 col-md-6 col-lg-4">
+                                <t t-call="trivia_animal_shelter.animal_card"/>
+                            </div>
+                        </t>
+                    </div>
                 </div>
             </div>
         </t>
@@ -33,7 +82,21 @@
          and a link to the page of the animal (animal.website_url).
          ====================================================================== -->
     <template id="animal_card" name="Adopt: Animal Card">
-        <t/>
+        <div class="card h-100 o_shelter_card" t-att-data-animal-id="animal.id">
+            <div class="card-body d-flex flex-column text-center">
+                <div class="display-3 mb-2" t-out="animal.species_emoji"/>
+                <h5 class="card-title fw-bold" t-out="animal.name"/>
+                <p class="card-text text-muted mb-1" t-if="animal.breed">
+                    <t t-out="animal.breed"/>
+                </p>
+                <p class="card-text text-muted mb-3" t-if="animal.age">
+                    <t t-out="animal.age"/>
+                </p>
+                <a t-att-href="animal.website_url" class="btn btn-outline-primary mt-auto">
+                    Meet <t t-out="animal.name"/>
+                </a>
+            </div>
+        </div>
     </template>
 
     <!-- ======================================================================
@@ -48,7 +111,54 @@
         <t t-call="website.layout">
             <div id="wrap" class="o_shelter">
                 <div class="container py-5">
-                    <a href="/adopt">← All the animals</a>
+                    <div class="mb-4">
+                        <a href="/adopt" class="text-decoration-none">← All the animals</a>
+                    </div>
+                    <div class="row g-5">
+                        <div class="col-12 col-md-5 text-center">
+                            <div class="card p-4 border-0 shadow-sm bg-light">
+                                <div class="display-1 mb-3" t-out="animal.species_emoji"/>
+                                <h2 class="fw-bold" t-out="animal.name"/>
+                                <p class="lead text-muted mb-2" t-if="animal.breed" t-out="animal.breed"/>
+                                <div class="d-flex justify-content-center gap-2 mt-2">
+                                    <span class="badge bg-secondary px-3 py-2" t-if="animal.age" t-out="animal.age"/>
+                                    <span class="badge bg-info text-dark px-3 py-2 text-capitalize" t-if="animal.sex" t-out="animal.sex"/>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-12 col-md-7">
+                            <h3 class="fw-bold mb-3">About <t t-out="animal.name"/></h3>
+                            <div class="mb-4 text-secondary" style="white-space: pre-line;" t-out="animal.description"/>
+
+                            <div class="card p-4 border mt-4 shadow-sm">
+                                <h4 class="card-title mb-3">Ask to adopt <t t-out="animal.name"/></h4>
+                                <form method="post" t-attf-action="#{animal.website_url}/request">
+                                    <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                    <div class="mb-3">
+                                        <label for="name" class="form-label">Your Name</label>
+                                        <input type="text" id="name" name="name" class="form-control" required="required" placeholder="Jane Doe"/>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label for="email" class="form-label">Email Address</label>
+                                            <input type="email" id="email" name="email" class="form-control" required="required" placeholder="jane@example.com"/>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label for="phone" class="form-label">Phone Number</label>
+                                            <input type="tel" id="phone" name="phone" class="form-control" placeholder="+352 ..."/>
+                                        </div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="message" class="form-label">Message</label>
+                                        <textarea id="message" name="message" class="form-control" rows="4" placeholder="Tell us why you would love to adopt..."></textarea>
+                                    </div>
+                                    <button type="submit" class="btn btn-primary">
+                                        Send Adoption Request
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </t>
@@ -72,6 +182,11 @@
     </template>
 
     <!-- TODO 5: a menu "Adopt" in the main menu of the website, opening /adopt (model website.menu) -->
+    <record id="menu_adopt" model="website.menu">
+        <field name="name">Adopt</field>
+        <field name="url">/adopt</field>
+        <field name="parent_id" ref="website.main_menu"/>
+        <field name="sequence" type="int">50</field>
+    </record>
 
-    <!-- ⭐ BONUS: a building block (snippet) "Animal of the week", available in the website editor -->
 </odoo>

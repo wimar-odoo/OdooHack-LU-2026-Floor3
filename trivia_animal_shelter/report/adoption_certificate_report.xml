@@ -8,4 +8,58 @@
     the applicant, the animal (name, species, breed) and the date of the day.
     Tip: use the layout of the company documents, web.external_layout.
     -->
+    <record id="action_report_adoption_certificate" model="ir.actions.report">
+        <field name="name">Adoption Certificate</field>
+        <field name="model">shelter.adoption.request</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">trivia_animal_shelter.report_adoption_certificate</field>
+        <field name="binding_model_id" ref="model_shelter_adoption_request"/>
+        <field name="binding_type">report</field>
+    </record>
+
+    <template id="report_adoption_certificate">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="doc">
+                <t t-call="web.external_layout">
+                    <div class="page">
+                        <div class="text-center my-5">
+                            <h1 class="display-4 fw-bold">Refuge Les 4 Pattes</h1>
+                            <h2 class="text-muted">Official Certificate of Adoption</h2>
+                        </div>
+
+                        <div class="my-5 p-4 border rounded text-center">
+                            <p class="fs-4">
+                                This certifies that
+                            </p>
+                            <h2 class="fw-bold text-primary my-3">
+                                <t t-out="doc.name"/>
+                            </h2>
+                            <p class="fs-4">
+                                has officially welcomed and adopted
+                            </p>
+                            <h2 class="fw-bold text-success my-3">
+                                <t t-out="doc.animal_id.species_emoji"/> <t t-out="doc.animal_id.name"/>
+                            </h2>
+                            <p class="text-muted fs-5" t-if="doc.animal_id.breed">
+                                Breed: <t t-out="doc.animal_id.breed"/>
+                            </p>
+                            <p class="text-muted fs-5" t-if="doc.animal_id.age">
+                                Age: <t t-out="doc.animal_id.age"/>
+                            </p>
+                        </div>
+
+                        <div class="row mt-5">
+                            <div class="col-6">
+                                <p><strong>Date:</strong> <span t-out="doc.create_date.date() if doc.create_date else ''"/></p>
+                            </div>
+                            <div class="col-6 text-end">
+                                <p><strong>Refuge Les 4 Pattes</strong></p>
+                                <p class="text-muted">Authorized Signature</p>
+                            </div>
+                        </div>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
 </odoo>
