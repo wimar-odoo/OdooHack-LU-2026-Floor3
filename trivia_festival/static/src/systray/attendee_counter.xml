@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <t t-name="trivia_festival.AttendeeCounter">
+        <div class="d-flex align-items-center gap-1 px-2" title="Attendees present" aria-label="Attendees present">
+            <i class="fa fa-users" aria-hidden="true"/>
+            <span t-out="this.state.attendees"/>
+        </div>
+    </t>
+
+</templates>

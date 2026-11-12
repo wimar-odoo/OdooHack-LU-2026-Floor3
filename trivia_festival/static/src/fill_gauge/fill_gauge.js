@@ -34,10 +34,33 @@ export class FillGauge extends Component {
     props = useProps(standardFieldProps);
 
     get value() {
-        return this.props.record.data[this.props.name] || 0;
+        return Number(this.props.record.data[this.props.name] || 0);
     }
 
-    // TODO 1: the maximum, the percentage and the color (a Bootstrap class: bg-success, bg-warning or bg-danger)
+    get max() {
+        return Number(this.props.record.data.seats_max || 0);
+    }
+
+    get percentage() {
+        if (!this.max) {
+            return 0;
+        }
+        return Math.min(Math.round((this.value / this.max) * 100), 100);
+    }
+
+    get color() {
+        if (this.percentage < 70) {
+            return "bg-success";
+        }
+        if (this.percentage < 90) {
+            return "bg-warning";
+        }
+        return "bg-danger";
+    }
+
+    get progressStyle() {
+        return `width: ${this.percentage}%;`;
+    }
 }
 
-// TODO 1: add the widget to the registry of the fields
+registry.category("fields").add("festival_fill_gauge", FillGauge);
