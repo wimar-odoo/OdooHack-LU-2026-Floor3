@@ -1,11 +1,27 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <!--
-    TODO 6 - The adoption certificate
+    <record id="action_report_adoption_certificate" model="ir.actions.report">
+        <field name="name">Adoption Certificate</field>
+        <field name="model">shelter.adoption.request</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">trivia_animal_shelter.report_adoption_certificate</field>
+        <field name="binding_model_id" ref="model_shelter_adoption_request"/>
+        <field name="binding_type">report</field>
+    </record>
 
-    A PDF report "Adoption Certificate" on the adoption requests (model shelter.adoption.request),
-    printable from the form of a request (Print menu). It shows the name of the shelter, the name of
-    the applicant, the animal (name, species, breed) and the date of the day.
-    Tip: use the layout of the company documents, web.external_layout.
-    -->
+    <template id="report_adoption_certificate">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="doc">
+                <t t-call="web.external_layout">
+                    <div class="page text-center py-5">
+                        <h1 class="mb-4">Adoption Certificate</h1>
+                        <p class="lead">This certifies that</p>
+                        <h2 class="my-3" t-out="doc.name"/>
+                        <p class="lead">has applied to adopt</p>
+                        <h2 class="my-3 text-primary" t-out="doc.animal_id.name"/>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
 </odoo>

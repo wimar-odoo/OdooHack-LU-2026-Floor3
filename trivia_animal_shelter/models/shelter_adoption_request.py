@@ -1,5 +1,5 @@
-from odoo import api, fields, models
-
+from odoo import _, api, fields, models
+from odoo.exceptions import ValidationError
 
 class ShelterAdoptionRequest(models.Model):
     _name = "shelter.adoption.request"
@@ -29,14 +29,13 @@ class ShelterAdoptionRequest(models.Model):
 
     @api.model
     def _create_from_website(self, animal, values):
-        """ Create the adoption request sent by a visitor of the website for ``animal``,
-        from the ``values`` posted by the form (name, email, phone, message).
-
-        * the visitors (public user) have no access rights on the requests;
-        * only the fields of the form can be set: a visitor must not be able to choose
-          the animal or the status of the request;
-        * only an adoptable animal (TODO 1) can be requested.
-
-        :return: the new request
-        """
-        raise NotImplementedError("TODO 4")
+        animal_sudo = animal.sudo()
+        if not animal_sudo.is_published or animal_sudo.adopted:
+            raise ValidationError(_("This animal cannot be adopted."))
+        return self.sudo().create({
+            "animal_id": animal_sudo.id,
+            "name": values.get("name"),
+            "email": values.get("email"),
+            "phone": values.get("phone"),
+            "message": values.get("message"),
+        })
