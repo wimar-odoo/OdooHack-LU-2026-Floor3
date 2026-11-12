@@ -10,4 +10,41 @@
 
     ⭐ BONUS: a "Fees" smart button on the contact form, showing the number of fees of the member.
     -->
+
+    <record id="garden_partner_form" model="ir.ui.view">
+    <field name="name">res.partner.form.garden</field>
+    <field name="model">res.partner</field>
+    <field name="inherit_id" ref="base.view_partner_form"/>
+    <field name="arch" type="xml">
+        <xpath expr="//notebook" position="inside">
+            <page name="garden_membership" string="Membership">
+                <group>
+                    <field name="membership_type"/>
+                    <field name="member_since"/>
+                    <field name="last_paid_year"/>
+                </group>
+                <field name="fee_ids">
+                    <list editable="bottom">
+                        <field name="year"/>
+                        <field name="amount"/>
+                        <field name="state"/>
+                        <field name="payment_date"/>
+                    </list>
+                </field>
+            </page>
+        </xpath>
+    </field>
+</record>
+
+<record id="garden_partner_filter" model="ir.ui.view">
+    <field name="name">res.partner.search.garden</field>
+    <field name="model">res.partner</field>
+    <field name="inherit_id" ref="base.view_res_partner_filter"/>
+    <field name="arch" type="xml">
+        <xpath expr="//search" position="inside">
+            <filter name="garden_not_up_to_date" string="Not up to date"
+                    domain="[('last_paid_year', '&lt;', context_today().year)]"/>
+        </xpath>
+    </field>
+</record>
 </odoo>
