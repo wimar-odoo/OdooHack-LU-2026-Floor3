@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ================================================================
+         BONUS - Animal of the week
+         Custom building block for the Odoo Website Builder
+         ================================================================ -->
+
+    <!-- Animal of the week snippet -->
+    <template id="s_animal_of_week" name="Animal of the week">
+
+        <section class="s_animal_of_week o_shelter py-5"
+                 data-snippet="s_animal_of_week"
+                 data-name="Animal of the week">
+
+            <!-- Retrieve the first available animal -->
+            <t t-set="animal"
+               t-value="request.env['shelter.animal'].sudo()._get_adoptable_animals()[:1]"/>
+
+            <div class="container">
+
+                <t t-if="animal">
+
+                    <div class="row align-items-center g-4">
+
+                        <!-- Animal emoji -->
+                        <div class="col-12 col-md-5 text-center">
+
+                            <div class="display-1 mb-3"
+                                 t-out="animal.species_emoji"/>
+
+                        </div>
+
+                        <!-- Animal information -->
+                        <div class="col-12 col-md-7">
+
+                            <span class="badge bg-success mb-3">
+                                Animal of the week
+                            </span>
+
+                            <h2 class="display-5 fw-bold">
+                                <span t-field="animal.name"/>
+                            </h2>
+
+                            <p class="lead text-muted">
+
+                                <t t-if="animal.breed">
+                                    <span t-field="animal.breed"/>
+                                </t>
+
+                                <t t-if="animal.age">
+                                    <span> · </span>
+                                    <span t-field="animal.age"/>
+                                </t>
+
+                            </p>
+
+                            <p t-if="animal.description"
+                               class="mb-4"
+                               t-out="animal.description"/>
+
+                            <a t-att-href="animal.website_url"
+                               class="btn btn-primary btn-lg">
+                                Meet me!
+                                <i class="fa fa-arrow-right ms-2"/>
+                            </a>
+
+                        </div>
+
+                    </div>
+
+                </t>
+
+                <!-- No available animals -->
+                <t t-else="">
+
+                    <div class="text-center py-4">
+                        <h3>Waiting for a new friend?</h3>
+                        <p class="text-muted">
+                            No animals are currently available for adoption.
+                        </p>
+                        <a href="/adopt" class="btn btn-primary">
+                            Discover our shelter
+                        </a>
+                    </div>
+
+                </t>
+
+            </div>
+
+        </section>
+
+    </template>
+
+
+    <!-- Register the building block in the Website Builder -->
+    <template id="animal_snippets"
+              inherit_id="website.snippets"
+              name="Refuge Les 4 Pattes Snippets">
+
+        <xpath expr="//snippets[@id='snippet_structure']/*[1]"
+               position="before">
+
+            <t t-snippet="trivia_animal_shelter.s_animal_of_week"
+               string="Animal of the week"
+               group="content">
+
+                <keywords>
+                    Animal of the week Shelter Adoption Refuge Animals
+                </keywords>
+
+            </t>
+
+        </xpath>
+
+    </template>
+
+</odoo>

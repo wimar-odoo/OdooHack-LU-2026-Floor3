@@ -5,3 +5,90 @@
 // then give a style to the cards of the animals (.o_shelter_card): for example a shadow
 // and a small zoom when the mouse goes over a card.
 // ----------------------------------------------------------------------------
+
+/* ==========================================================================
+   Refuge Les 4 Pattes - Adoption pages
+   ========================================================================== */
+
+/* Animal cards */
+.o_shelter_card {
+    border: none;
+    border-radius: 16px;
+    overflow: hidden;
+    background: #ffffff;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+/* Hover effect */
+.o_shelter_card:hover {
+    transform: translateY(-6px) scale(1.02);
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.14);
+}
+
+/* Card content */
+.o_shelter_card .card-body {
+    padding: 28px;
+}
+
+/* Animal emoji */
+.o_shelter_card .display-4 {
+    font-size: 4rem;
+    line-height: 1.3;
+}
+
+/* Animal name */
+.o_shelter_card .card-title {
+    font-weight: 700;
+    color: #343a40;
+}
+
+/* Animal information */
+.o_shelter_card .text-muted {
+    font-size: 0.95rem;
+}
+
+/* Buttons */
+.o_shelter .btn-primary {
+    border-radius: 30px;
+    padding: 10px 24px;
+    font-weight: 600;
+    transition: all 0.2s ease;
+}
+
+/* Detail page */
+.o_shelter .display-1 {
+    font-size: 7rem;
+}
+
+/* Adoption form */
+.o_shelter .card {
+    border-radius: 16px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 576px) {
+    .o_shelter_card .card-body {
+        padding: 20px;
+    }
+
+    .o_shelter_card:hover {
+        transform: translateY(-3px);
+    }
+
+    .o_shelter .display-1 {
+        font-size: 5rem;
+    }
+}
+
+/* Accessibility: respect reduced motion preferences */
+@media (prefers-reduced-motion: reduce) {
+    .o_shelter_card,
+    .o_shelter .btn-primary {
+        transition: none;
+    }
+
+    .o_shelter_card:hover {
+        transform: none;
+    }
+}

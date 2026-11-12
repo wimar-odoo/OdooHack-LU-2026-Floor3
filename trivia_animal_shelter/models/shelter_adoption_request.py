@@ -1,4 +1,6 @@
+
 from odoo import api, fields, models
+from odoo.exceptions import UserError
 
 
 class ShelterAdoptionRequest(models.Model):
@@ -29,14 +31,23 @@ class ShelterAdoptionRequest(models.Model):
 
     @api.model
     def _create_from_website(self, animal, values):
-        """ Create the adoption request sent by a visitor of the website for ``animal``,
-        from the ``values`` posted by the form (name, email, phone, message).
+        """Create an adoption request from the website."""
 
-        * the visitors (public user) have no access rights on the requests;
-        * only the fields of the form can be set: a visitor must not be able to choose
-          the animal or the status of the request;
-        * only an adoptable animal (TODO 1) can be requested.
+        if not animal or not animal.exists():
+            raise UserError("Animal not found.")
 
-        :return: the new request
-        """
-        raise NotImplementedError("TODO 4")
+        adoptable_animals = self.env["shelter.animal"]._get_adoptable_animals()
+
+        if animal not in adoptable_animals:
+            raise UserError("This animal is not available for adoption.")
+
+        allowed_fields = ["name", "email", "phone", "message"]
+
+        request_values = {
+            field: values.get(field)
+            for field in allowed_fields
+        }
+
+        request_values["animal_id"] = animal.id
+
+        return self.sudo().create(request_values)
