@@ -1,4 +1,5 @@
 from odoo import api, fields, models
+from odoo.tools import SQL
 
 CATEGORIES = [
     ("junior", "Junior (under 20)"),
@@ -32,16 +33,32 @@ class RunRunner(models.Model):
 
     # ----------------------------------------------------------------------------
     # TODO 2 - The amount raised
-    #
-    # This computation runs one query per runner (the famous "N+1 queries"): the
-    # list of the runners is slow. Compute it for all the runners at once.
     # ----------------------------------------------------------------------------
 
     @api.depends("pledge_ids.amount_per_km", "distance_km")
     def _compute_amount_raised(self):
+        if not self.ids:
+            self.amount_raised = 0.0
+            return
+
+        # Flush pending ORM changes to the database before running raw SQL
+        self.flush_model(["distance_km"])
+        self.env["run.pledge"].flush_model(["runner_id", "amount_per_km"])
+
+        self.env.cr.execute(SQL(
+            """
+            SELECT r.id,
+                   COALESCE(SUM(p.amount_per_km), 0.0) * COALESCE(r.distance_km, 0.0)
+              FROM run_runner r
+              LEFT JOIN run_pledge p ON p.runner_id = r.id
+             WHERE r.id IN %s
+             GROUP BY r.id, r.distance_km
+            """,
+            tuple(self.ids),
+        ))
+        amounts = dict(self.env.cr.fetchall())
         for runner in self:
-            pledges = self.env["run.pledge"].search([("runner_id", "=", runner.id)])
-            runner.amount_raised = sum(pledges.mapped("amount_per_km")) * runner.distance_km
+            runner.amount_raised = amounts.get(runner.id, 0.0)
 
     def action_disqualify(self):
         self.disqualified = True
@@ -55,17 +72,17 @@ class RunRunner(models.Model):
 
     @api.model
     def search_by_bib_or_name(self, term):
-        """ Return the runners whose bib number is ``term``, or whose name contains ``term``.
-
-        It is used by the results kiosk of the race village, where anybody can type
-        anything... This query is vulnerable to SQL injection: try ' OR 1=1 --
-        """
+        """ Return the runners whose bib number is ``term``, or whose name contains ``term``. """
         self.flush_model(["bib", "name"])  # raw SQL reads the database, not the cache of the ORM
-        self.env.cr.execute(f"""
+        self.env.cr.execute(SQL(
+            """
             SELECT id
               FROM run_runner
-             WHERE bib::text = '{term}'
-                OR name ILIKE '%{term}%'
+             WHERE bib::text = %s
+                OR name ILIKE %s
           ORDER BY edition_id DESC, bib
-        """)
+            """,
+            str(term),
+            f"%{term}%",
+        ))
         return self.browse([row[0] for row in self.env.cr.fetchall()])

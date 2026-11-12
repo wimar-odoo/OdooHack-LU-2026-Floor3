@@ -42,17 +42,36 @@ class RunResultReport(models.Model):
         self.env.cr.execute(SQL(
             """
             CREATE OR REPLACE VIEW %s AS (
-                SELECT NULL::integer AS id,
-                       NULL::integer AS runner_id,
-                       NULL::integer AS edition_id,
-                       NULL::integer AS bib,
-                       NULL::varchar AS category,
-                       NULL::varchar AS gender,
-                       NULL::numeric AS finish_time,
-                       NULL::numeric AS pace,
-                       NULL::bigint AS rank,
-                       NULL::bigint AS category_rank
-                 WHERE FALSE
+                WITH finished_runners AS (
+                    SELECT r.id AS id,
+                           r.id AS runner_id,
+                           r.edition_id AS edition_id,
+                           r.bib AS bib,
+                           r.category AS category,
+                           r.gender AS gender,
+                           EXTRACT(EPOCH FROM (s10.time - s0.time)) / 60.0 AS finish_time
+                      FROM run_runner r
+                      JOIN run_split s0 ON s0.runner_id = r.id AND s0.checkpoint_km = 0
+                      JOIN run_split s10 ON s10.runner_id = r.id AND s10.checkpoint_km = 10
+                     WHERE NOT COALESCE(r.disqualified, FALSE)
+                )
+                SELECT id,
+                       runner_id,
+                       edition_id,
+                       bib,
+                       category,
+                       gender,
+                       finish_time,
+                       finish_time / 10.0 AS pace,
+                       RANK() OVER (
+                           PARTITION BY edition_id
+                           ORDER BY finish_time
+                       ) AS rank,
+                       RANK() OVER (
+                           PARTITION BY edition_id, category
+                           ORDER BY finish_time
+                       ) AS category_rank
+                  FROM finished_runners
             )
             """,
             SQL.identifier(self._table),
