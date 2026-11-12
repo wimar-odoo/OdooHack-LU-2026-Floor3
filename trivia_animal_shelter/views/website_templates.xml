@@ -189,4 +189,28 @@
         <field name="sequence" type="int">50</field>
     </record>
 
+    <template id="s_animal_of_the_week" name="Animal of the week">
+        <section class="s_animal_of_the_week py-5 bg-light text-center">
+            <div class="container">
+                <span class="badge bg-warning text-dark px-3 py-2 fs-6 mb-3">⭐ Star of the Week</span>
+                <h2 class="display-5 fw-bold mb-3">Meet Our Animal of the Week!</h2>
+                <div class="display-1 mb-3">🐶</div>
+                <h3 class="fw-bold">Bella</h3>
+                <p class="lead text-muted mx-auto" style="max-width: 600px;">
+                    Friendly, energetic, and loves cuddles! Ready to join a caring family.
+                </p>
+                <a href="/adopt" class="btn btn-primary btn-lg mt-3">Adopt a Pet</a>
+            </div>
+        </section>
+    </template>
+
+    <template id="snippets" inherit_id="website.snippets" name="Shelter Snippets">
+        <xpath expr="//t[@t-snippet][1]" position="before">
+            <t t-snippet="trivia_animal_shelter.s_animal_of_the_week"
+               string="Animal of the week"
+               group="content"
+               t-thumbnail="/trivia_animal_shelter/static/description/icon.png"/>
+        </xpath>
+    </template>
+
 </odoo>
