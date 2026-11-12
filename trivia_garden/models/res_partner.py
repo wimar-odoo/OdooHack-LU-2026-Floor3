@@ -2,7 +2,7 @@ from odoo import models, fields, api
 
 
 class ResPartner(models.Model):
-    _inherit = "res.partner"
+    _inherit = "res.partner" 
 
     # ----------------------------------------------------------------------------
     # TODO 4 - The members
@@ -23,9 +23,26 @@ class ResPartner(models.Model):
     member_since = fields.Date()
     fee_ids = fields.One2many("garden.membership.fee", "partner_id", string="Membership Fees")
     last_paid_year = fields.Integer(compute="_compute_last_paid_year", store=True)
+    fee_count = fields.Integer(compute="_compute_fee_count")
 
     @api.depends("fee_ids.state", "fee_ids.year")
     def _compute_last_paid_year(self):
         for partner in self:
             paid = partner.fee_ids.filtered(lambda f: f.state == "paid")
             partner.last_paid_year = max(paid.mapped("year"), default=0)
+
+    @api.depends("fee_ids")
+    def _compute_fee_count(self):
+        for partner in self:
+            partner.fee_count = len(partner.fee_ids)
+
+    def action_view_fees(self):
+        self.ensure_one()
+        return {
+            "type": "ir.actions.act_window",
+            "name": "Membership Fees",
+            "res_model": "garden.membership.fee",
+            "view_mode": "list,form",
+            "domain": [("partner_id", "=", self.id)],
+            "context": {"default_partner_id": self.id},
+        }
