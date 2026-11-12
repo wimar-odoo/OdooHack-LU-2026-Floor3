@@ -1,4 +1,6 @@
-from odoo import fields, models
+from odoo import fields, models, api
+from odoo.exceptions import ValidationError
+import datetime
 
 
 class GardenPlot(models.Model):
@@ -18,3 +20,11 @@ class GardenPlot(models.Model):
     # current year (see last_paid_year, TODO 4), and a member rents one plot at most.
     # Refuse the other cases with a clear message.
     # ----------------------------------------------------------------------------
+
+    @api.constrains('tenant_id')
+    def _check_tenant_membership(self):
+        for record in self:
+            if record.tenant_id.last_paid_year != datetime.date.today().year:
+                raise ValidationError("No valid membership for this tenant.")
+
+    _unique_tenant_constraint = models.Constraint('UNIQUE(tenant_id)', 'This tenant already has a plot assigned')
