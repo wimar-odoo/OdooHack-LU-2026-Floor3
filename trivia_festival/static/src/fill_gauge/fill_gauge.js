@@ -26,6 +26,7 @@
  * ---------------------------------------------------------------------------------------------
  */
 import { Component, useProps } from "@odoo/owl";
+import { _t } from "@web/core/l10n/translation";
 import { registry } from "@web/core/registry";  // eslint-disable-line no-unused-vars
 import { standardFieldProps } from "@web/views/fields/standard_field_props";
 
@@ -63,4 +64,8 @@ export class FillGauge extends Component {
     }
 }
 
-registry.category("fields").add("festival_fill_gauge", FillGauge);
+registry.category("fields").add("festival_fill_gauge", {
+    component: FillGauge,
+    displayName: _t("Festival Fill Gauge"),
+    supportedTypes: ["integer"],
+});
