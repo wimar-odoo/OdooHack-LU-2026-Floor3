@@ -63,6 +63,11 @@ class ShelterAnimal(models.Model):
         """ Return the species as a list of (key, label), e.g. [('cat', "Cat"), ...]. """
         return self._fields["species"]._description_selection(self.env)
 
+    @api.model
+    def _get_sexes(self):
+        """ Return the sexes as a list of (key, label), e.g. [('female', "Female"), ('male', "Male")]. """
+        return self._fields["sex"]._description_selection(self.env)
+
     def action_view_requests(self):
         self.ensure_one()
         return {
@@ -79,9 +84,32 @@ class ShelterAnimal(models.Model):
     # ----------------------------------------------------------------------------
 
     @api.model
-    def _get_adoptable_animals(self, species=None):
+    def _get_adoptable_animals(self, species=None, sex=None, sort_by=None):
+    # def _get_adoptable_animals(self, species=None):
         """ Return the animals that can be adopted: published on the website and not
-        adopted yet, ordered by name. When ``species`` is given (e.g. 'cat'), only the
-        animals of this species.
+        adopted yet, ordered by name by default.
+
+        :param species: optional species filter (e.g. 'cat', 'dog')
+        :param sex: optional sex filter ('male', 'female')
+        :param sort_by: sorting criterion:
+            - 'oldest' or 'age': oldest animals first (birth_date asc)
+            - 'youngest': youngest animals first (birth_date desc)
+            - or custom SQL order string (defaults to 'name')
         """
-        return self.browse()
+        domain = [("is_published", "=", True), ("adopted", "=", False)]
+        if species:
+            domain.append(("species", "=", species))
+        if sex:
+            domain.append(("sex", "=", sex))
+
+        if sort_by in ("oldest", "age"):
+            order = "birth_date asc nulls last, name"
+        elif sort_by == "youngest":
+            order = "birth_date desc nulls last, name"
+        elif sort_by:
+            order = sort_by
+        else:
+            order = "name"
+
+        return self.search(domain, order=order)
+        

@@ -16,12 +16,30 @@ class ShelterController(http.Controller):
     # animals (TODO 1). An optional parameter filters the species: /adopt?species=cat
     # ----------------------------------------------------------------------------
 
+    @http.route('/adopt', type='http', auth='public', website=True)
+    def adopt(self, species=None, sex=None, sort_by=None, **kwargs):
+        animals = request.env['shelter.animal']._get_adoptable_animals(
+            species=species, sex=sex, sort_by=sort_by
+        )
+        return request.render('trivia_animal_shelter.animal_list', {
+            'animals': animals,
+            'species': species,
+            'sex': sex,
+            'sort_by': sort_by,
+        })
+
     # ----------------------------------------------------------------------------
     # TODO 3 - The page of an animal
     #
     # /adopt/<model("shelter.animal"):animal> renders the template
     # trivia_animal_shelter.animal_detail.
     # ----------------------------------------------------------------------------
+
+    @http.route('/adopt/<model("shelter.animal"):animal>', type='http', auth='public', website=True)
+    def animal_detail(self, animal, **kwargs):
+        return request.render('trivia_animal_shelter.animal_detail', {
+            'animal': animal,
+        })
 
     # ----------------------------------------------------------------------------
     # TODO 4 - The adoption request
@@ -31,3 +49,11 @@ class ShelterController(http.Controller):
     # shelter.adoption.request._create_from_website(), then render the template
     # trivia_animal_shelter.adoption_thanks.
     # ----------------------------------------------------------------------------
+
+    @http.route('/adopt/<model("shelter.animal"):animal>/request', type='http', auth='public', website=True, methods=['POST'])
+    def animal_request(self, animal, **post):
+        adoption_request = request.env['shelter.adoption.request']._create_from_website(animal, post)
+        return request.render('trivia_animal_shelter.adoption_thanks', {
+            'animal': animal,
+            'adoption_request': adoption_request,
+        })
