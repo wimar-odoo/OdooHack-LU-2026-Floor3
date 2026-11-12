@@ -1,4 +1,5 @@
 from odoo import api, fields, models
+from odoo.tools import SQL
 
 CATEGORIES = [
     ("junior", "Junior (under 20)"),
@@ -30,18 +31,19 @@ class RunRunner(models.Model):
 
     _bib_uniq = models.Constraint("UNIQUE(edition_id, bib)", "Two runners of an edition cannot have the same bib.")
 
-    # ----------------------------------------------------------------------------
-    # TODO 2 - The amount raised
-    #
-    # This computation runs one query per runner (the famous "N+1 queries"): the
-    # list of the runners is slow. Compute it for all the runners at once.
-    # ----------------------------------------------------------------------------
-
     @api.depends("pledge_ids.amount_per_km", "distance_km")
     def _compute_amount_raised(self):
+        pledge_totals = self.env["run.pledge"]._read_group(
+            [("runner_id", "in", self.ids)],
+            ["runner_id"],
+            ["amount_per_km:sum"],
+        )
+        totals_by_runner = {
+            runner.id: total
+            for runner, total in pledge_totals
+        }
         for runner in self:
-            pledges = self.env["run.pledge"].search([("runner_id", "=", runner.id)])
-            runner.amount_raised = sum(pledges.mapped("amount_per_km")) * runner.distance_km
+            runner.amount_raised = totals_by_runner.get(runner.id, 0) * runner.distance_km
 
     def action_disqualify(self):
         self.disqualified = True
@@ -49,23 +51,19 @@ class RunRunner(models.Model):
     def action_requalify(self):
         self.disqualified = False
 
-    # ----------------------------------------------------------------------------
-    # TODO 3 - The results kiosk
-    # ----------------------------------------------------------------------------
-
     @api.model
     def search_by_bib_or_name(self, term):
-        """ Return the runners whose bib number is ``term``, or whose name contains ``term``.
-
-        It is used by the results kiosk of the race village, where anybody can type
-        anything... This query is vulnerable to SQL injection: try ' OR 1=1 --
-        """
+        """ Return runners whose bib matches ``term`` or whose name contains it. """
         self.flush_model(["bib", "name"])  # raw SQL reads the database, not the cache of the ORM
-        self.env.cr.execute(f"""
+        self.env.cr.execute(SQL(
+            """
             SELECT id
               FROM run_runner
-             WHERE bib::text = '{term}'
-                OR name ILIKE '%{term}%'
+             WHERE bib::text = %s
+                OR name ILIKE %s
           ORDER BY edition_id DESC, bib
-        """)
+            """,
+            term,
+            f"%{term}%",
+        ))
         return self.browse([row[0] for row in self.env.cr.fetchall()])
