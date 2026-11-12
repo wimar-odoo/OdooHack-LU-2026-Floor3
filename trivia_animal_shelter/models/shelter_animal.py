@@ -84,4 +84,8 @@ class ShelterAnimal(models.Model):
         adopted yet, ordered by name. When ``species`` is given (e.g. 'cat'), only the
         animals of this species.
         """
-        return self.browse()
+
+        if species == None:
+            return self.search([('is_published', '=', True), ('adopted', '=', False)], order='name')
+        else:
+            return self.search([('is_published', '=', True), ('adopted', '=', False), ('species', '=', species)], order='name')
