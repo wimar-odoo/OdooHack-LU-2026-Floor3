@@ -1,4 +1,6 @@
-from odoo import models
+from dataclasses import fields
+
+from odoo import api, fields, models
 
 
 class ResPartner(models.Model):
@@ -17,3 +19,23 @@ class ResPartner(models.Model):
     # last_paid_year must always be up to date: when a fee is paid, when its year
     # changes, when a fee is added or deleted.
     # ----------------------------------------------------------------------------
+
+    membership_type = fields.Selection(
+        [("individual", "Individual"), ("family", "Family"), ("patron", "Patron")],
+        string="Membership Type",
+    )
+    member_since = fields.Date(string="Member Since")
+    fee_ids = fields.One2many("garden.membership.fee", "partner_id", string="Membership Fees")
+    last_paid_year = fields.Integer(
+        string="Last Paid Year",
+        compute="_compute_last_paid_year",
+        store=True,
+    )
+
+    @api.depends("fee_ids.state", "fee_ids.year")
+    def _compute_last_paid_year(self):
+        for partner in self:
+            paid_years = partner.fee_ids.filtered(lambda fee: fee.state == "paid").mapped("year")
+            partner.last_paid_year = max(paid_years, default=0)
+
+
