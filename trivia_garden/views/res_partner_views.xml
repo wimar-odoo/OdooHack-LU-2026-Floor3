@@ -10,4 +10,42 @@
 
     ⭐ BONUS: a "Fees" smart button on the contact form, showing the number of fees of the member.
     -->
+
+    <record id="view_partner_membership_form" model="ir.ui.view">
+      <field name="name">res.partner.membership.form</field>
+      <field name="model">res.partner</field>
+      <field name="inherit_id" ref="base.view_partner_form"/>
+      <field name="arch" type="xml">
+        <xpath expr="//notebook" position="inside">
+          <page string="Membership">
+            <field name="membership_type"/>
+            <field name="member_since"/>
+            <field name="last_paid_year"/>
+            <field name="fee_ids">
+              <list>
+                <field name="year"/>
+                <field name="amount"/>
+                <field name="state"/>
+                <field name="payment_date"/>
+              </list>
+            </field>
+          </page>
+        </xpath>
+      </field>
+    </record>
+
+    <record id="view_partner_membership_search" model="ir.ui.view">
+      <field name="name">res.partner.membership.search</field>
+      <field name="model">res.partner</field>
+      <field name="inherit_id" ref="base.view_res_partner_filter"/>
+      <field name="arch" type="xml">
+        <xpath expr="//search" position="inside">
+          <separator/>
+          <filter string="Not up to date"
+                  name="not_up_to_date"
+                  domain="[('last_paid_year', '&lt;', context_today().year)]"/>
+        </xpath>
+      </field>
+    </record>
+    
 </odoo>
