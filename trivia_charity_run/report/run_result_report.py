@@ -42,17 +42,26 @@ class RunResultReport(models.Model):
         self.env.cr.execute(SQL(
             """
             CREATE OR REPLACE VIEW %s AS (
-                SELECT NULL::integer AS id,
-                       NULL::integer AS runner_id,
-                       NULL::integer AS edition_id,
-                       NULL::integer AS bib,
-                       NULL::varchar AS category,
-                       NULL::varchar AS gender,
-                       NULL::numeric AS finish_time,
-                       NULL::numeric AS pace,
-                       NULL::bigint AS rank,
-                       NULL::bigint AS category_rank
-                 WHERE FALSE
+                SELECT runner.id AS id,
+                        runner.id AS runner_id,
+                        runner.edition_id,
+                        runner.bib,
+                        runner.category,
+                        runner.gender,
+                        EXTRACT(EPOCH FROM (km10.time - km0.time)) / 60.0 AS finish_time,
+                        EXTRACT(EPOCH FROM (km10.time - km0.time)) / 60.0 / 10.0 AS pace,
+                        RANK() OVER (
+                            PARTITION BY runner.edition_id
+                            ORDER BY EXTRACT(EPOCH FROM (km10.time - km0.time))
+                        ) AS rank,
+                        RANK() OVER (
+                            PARTITION BY runner.edition_id, runner.category
+                            ORDER BY EXTRACT(EPOCH FROM (km10.time - km0.time))
+                        ) AS category_rank
+                FROM run_runner runner
+                JOIN run_split km0  ON km0.runner_id  = runner.id AND km0.checkpoint_km = 0
+                JOIN run_split km10 ON km10.runner_id = runner.id AND km10.checkpoint_km = 10
+                WHERE runner.disqualified IS NOT TRUE
             )
             """,
             SQL.identifier(self._table),

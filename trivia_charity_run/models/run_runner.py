@@ -16,10 +16,12 @@ class RunRunner(models.Model):
 
     name = fields.Char(required=True)
     bib = fields.Integer(required=True)
-    edition_id = fields.Many2one("run.edition", string="Edition", required=True, ondelete="cascade", index=True)
+    edition_id = fields.Many2one(
+        "run.edition", string="Edition", required=True, ondelete="cascade", index=True)
     category = fields.Selection(CATEGORIES, required=True)
     gender = fields.Selection(GENDERS, required=True)
-    distance_km = fields.Float(string="Distance (km)", help="Distance covered by the runner.")
+    distance_km = fields.Float(
+        string="Distance (km)", help="Distance covered by the runner.")
     disqualified = fields.Boolean()
     split_ids = fields.One2many("run.split", "runner_id", string="Split Times")
     pledge_ids = fields.One2many("run.pledge", "runner_id", string="Pledges")
@@ -28,7 +30,8 @@ class RunRunner(models.Model):
         help="Amount given by the sponsors: their pledges per km × the distance covered by the runner.",
     )
 
-    _bib_uniq = models.Constraint("UNIQUE(edition_id, bib)", "Two runners of an edition cannot have the same bib.")
+    _bib_uniq = models.Constraint(
+        "UNIQUE(edition_id, bib)", "Two runners of an edition cannot have the same bib.")
 
     # ----------------------------------------------------------------------------
     # TODO 2 - The amount raised
@@ -39,9 +42,19 @@ class RunRunner(models.Model):
 
     @api.depends("pledge_ids.amount_per_km", "distance_km")
     def _compute_amount_raised(self):
+        totals = {
+            runner.id: total
+            for runner, total in self.env["run.pledge"]._read_group(
+                # only pledges of the runners being computed
+                [("runner_id", "in", self.ids)],
+                groupby=["runner_id"],              # one group per runner
+                # sum amount_per_km in each group
+                aggregates=["amount_per_km:sum"],
+            )
+        }
         for runner in self:
-            pledges = self.env["run.pledge"].search([("runner_id", "=", runner.id)])
-            runner.amount_raised = sum(pledges.mapped("amount_per_km")) * runner.distance_km
+            runner.amount_raised = (totals.get(
+                runner.id) or 0.0) * runner.distance_km
 
     def action_disqualify(self):
         self.disqualified = True
@@ -60,12 +73,13 @@ class RunRunner(models.Model):
         It is used by the results kiosk of the race village, where anybody can type
         anything... This query is vulnerable to SQL injection: try ' OR 1=1 --
         """
-        self.flush_model(["bib", "name"])  # raw SQL reads the database, not the cache of the ORM
-        self.env.cr.execute(f"""
+        self.flush_model(
+            ["bib", "name"])  # raw SQL reads the database, not the cache of the ORM
+        self.env.cr.execute("""
             SELECT id
               FROM run_runner
-             WHERE bib::text = '{term}'
-                OR name ILIKE '%{term}%'
+             WHERE bib::text = %s
+                OR name ILIKE %s
           ORDER BY edition_id DESC, bib
-        """)
+        """, [term, f"%{term}%"])
         return self.browse([row[0] for row in self.env.cr.fetchall()])
