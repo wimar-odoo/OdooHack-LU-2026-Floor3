@@ -1,13 +1,63 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <!--
-    TODO 5 - The members on the contacts
+    <record id="res_partner_view_form_garden" model="ir.ui.view">
+        <field name="name">res.partner.form.garden</field>
+        <field name="model">res.partner</field>
+        <field name="inherit_id" ref="base.view_partner_form"/>
+        <field name="arch" type="xml">
+            <!-- ⭐ BONUS 1: Fees Smart Button -->
+            <div name="button_box" position="inside">
+                <button name="action_view_fees"
+                        type="object"
+                        class="oe_stat_button"
+                        icon="fa-money"
+                        invisible="fee_count == 0">
+                    <field name="fee_count" widget="statinfo" string="Fees"/>
+                </button>
+            </div>
 
-    * the contact form (base.view_partner_form) gets a "Membership" page, with the fields
-      membership_type, member_since, last_paid_year and the list of the fees (fee_ids);
-    * the contacts get a filter "Not up to date": the members whose last paid year is before
-      the current year.
+            <!-- Mission 5: Membership Notebook Page -->
+            <notebook position="inside">
+                <page name="membership" string="Membership">
+                    <group>
+                        <group>
+                            <field name="membership_type"/>
+                            <field name="member_since"/>
+                        </group>
+                        <group>
+                            <field name="last_paid_year"/>
+                        </group>
+                    </group>
+                    <field name="fee_ids">
+                        <list editable="bottom">
+                            <field name="year"/>
+                            <field name="amount"/>
+                            <field name="payment_date"/>
+                            <field name="state"/>
+                            <button name="action_mark_paid"
+                                    string="Mark as paid"
+                                    type="object"
+                                    icon="fa-check"
+                                    invisible="state != 'draft'"/>
+                        </list>
+                    </field>
+                </page>
+            </notebook>
+        </field>
+    </record>
 
-    ⭐ BONUS: a "Fees" smart button on the contact form, showing the number of fees of the member.
-    -->
+    <!-- Mission 5: Dynamic "Not up to date" Filter -->
+    <record id="res_partner_view_search_garden" model="ir.ui.view">
+        <field name="name">res.partner.search.garden</field>
+        <field name="model">res.partner</field>
+        <field name="inherit_id" ref="base.view_res_partner_filter"/>
+        <field name="arch" type="xml">
+            <filter name="inactive" position="before">
+                <filter name="not_up_to_date"
+                        string="Not up to date"
+                        domain="[('last_paid_year', '&lt;', context_today().year)]"/>
+                <separator/>
+            </filter>
+        </field>
+    </record>
 </odoo>
