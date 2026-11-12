@@ -22,6 +22,23 @@ class ResPartner(models.Model):
             paid_years = partner.fee_ids.filtered(lambda fee: fee.state == "paid").mapped("year")
             partner.last_paid_year = max(paid_years) if paid_years else 0
 
+    fee_count = fields.Integer(string="Fees", compute="_compute_fee_count")
+
+    @api.depends("fee_ids")
+    def _compute_fee_count(self):
+        for partner in self:
+            partner.fee_count = len(partner.fee_ids)
+
+    def action_view_fees(self):
+        self.ensure_one()
+        return {
+            "type": "ir.actions.act_window",
+            "name": "Membership Fees",
+            "res_model": "garden.membership.fee",
+            "view_mode": "list,form",
+            "domain": [("partner_id", "=", self.id)],
+            "context": {"default_partner_id": self.id},
+        }
 
     # ----------------------------------------------------------------------------
     # TODO 4 - The members
